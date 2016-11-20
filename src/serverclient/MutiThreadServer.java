@@ -114,5 +114,14 @@ public class MutiThreadServer extends JFrame//多线程服务器
             return result.toString();
         }
 
+        public String baiduTranslate(String words)
+        {
+            return null;
+        }
+
+        public String youdaoTranslate(String words)
+        {
+            return null;
+        }
     }
 }
