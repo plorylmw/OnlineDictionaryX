@@ -22,7 +22,6 @@ class ReadByPost extends Thread{
     public void run() {
         try {
 
-
             URL url = new URL("http://fanyi.youdao.com/openapi.do");
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.addRequestProperty("encoding", "UTF-8");

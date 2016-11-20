@@ -30,12 +30,19 @@ public class BaiduTranslate
         CloseableHttpResponse response = httpClient.execute(getWordMean);//取得返回的网页源码
 
         String result = EntityUtils.toString(response.getEntity());
+
+        //System.out.println(result);
+
         response.close();
         //注意(?s)，意思是让'.'匹配换行符，默认情况下不匹配
         Pattern searchMeanPattern = Pattern.compile("(?s)<div class=\"en-content\">.*?<div>.*?</div>.*?</div>");
         Matcher m1 = searchMeanPattern.matcher(result);
+
         if (m1.find()) {
             String means = m1.group();//所有解释，包含网页标签
+            //System.out.println(m1);
+            //System.out.println(means);
+
             String means1=means;
             Pattern getChinese = Pattern.compile("<strong>(.*?)</strong>"); //(?m)代表按行匹配
             Matcher m2 = getChinese.matcher(means);
