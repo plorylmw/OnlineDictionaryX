@@ -7,45 +7,112 @@ public class RequestFromClient
 {
     private String username;
     private String password;
-
-    private boolean login;
-    private boolean logout;
+    private boolean isOnline;
+    //---------------------------
 
     private String words;
-    private boolean chooseBaidu;
-    private boolean chooseYoudao;
-    private boolean chooseBing;
+    private boolean isSearch;
+    //---------------------------
+
     private boolean praiseForBaidu;
     private boolean praiseForYoudao;
     private boolean praiseForBing;
+    private boolean isPraise;
+    //---------------------------
 
     private String wordsTobeSend;
     private String accountTobeSend;
+    private boolean isSend;
+    //---------------------------
 
-    public RequestFromClient(String username, String password, boolean login) {
+    public RequestFromClient(String username, String password) {
         this.username = username;
         this.password = password;
-        this.login = false;
     }
 
     public void setWords(String words) {
         this.words = words;
-        this.praiseForBaidu = false;
-        this.praiseForBing = false;
-        this.praiseForBaidu = false;
     }
 
-    public void setChooseBaidu(boolean chooseBaidu) {
-        this.chooseBaidu = chooseBaidu;
+    public void setPraiseForBaidu(boolean praiseForBaidu){
+        this.praiseForBaidu = praiseForBaidu;
     }
 
-    public void setChooseYoudao(boolean chooseYoudao) {
-        this.chooseYoudao = chooseYoudao;
+    public void setPraiseForBing(boolean praiseForBing){
+        this.praiseForBing = praiseForBing;
     }
 
-    public void setChooseBing(boolean chooseBing) {
-        this.chooseBing = chooseBing;
+    public void setPraiseForYoudao(boolean praiseForYoudao){
+        this.praiseForYoudao = praiseForYoudao;
     }
 
+    public void setWordsTobeSend(String wordsTobeSend){
+        this.wordsTobeSend = wordsTobeSend;
+    }
 
+    public void setIsOnline(boolean isOnline){
+        this.isOnline = isOnline;
+    }
+
+    public void setIsSearch(boolean isSearch){
+        this.isSearch = isSearch;
+    }
+
+    public void setIsPraise(boolean isPraise){
+        this.isPraise = isPraise;
+    }
+
+    public void setIsSend(boolean isSend){
+        this.isSend = isSend;
+    }
+
+    //-------------------------------------------
+
+    public String getUsername(){
+        return username;
+    }
+
+    public String getPassword(){
+        return password;
+    }
+
+    public String getWords(){
+        return words;
+    }
+
+    public boolean getPraiseForBaidu(){
+        return praiseForBaidu;
+    }
+
+    public boolean getPraiseForYoudao(){
+        return praiseForYoudao;
+    }
+
+    public boolean getPraiseForBing(){
+        return praiseForBing;
+    }
+
+    public String getWordsTobeSend(){
+        return wordsTobeSend;
+    }
+
+    public String getAccountTobeSend(){
+        return accountTobeSend;
+    }
+
+    public boolean getIsOnline(){
+        return isOnline;
+    }
+
+    public boolean getIsSearch(){
+        return isSearch;
+    }
+
+    public boolean getIsPraise(){
+        return isPraise;
+    }
+
+    public boolean getIsSend(){
+        return isSend;
+    }
 }

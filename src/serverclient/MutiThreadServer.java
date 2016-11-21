@@ -83,6 +83,8 @@ public class MutiThreadServer extends JFrame//多线程服务器
                 while(true)
                 {
                     String words = inputFromClient.readUTF();
+
+
                     String bingTranslateResult = bingTranslate(words);
 
                     outputToClient.writeUTF(bingTranslateResult);

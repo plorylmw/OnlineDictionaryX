@@ -24,7 +24,22 @@ public class AccessDB
         statement = connection.createStatement();
     }
 
-    public static void main(String[] args)
+    public boolean login()
+    {
+        return true;
+    }
+
+    public void addPraise()
+    {
+
+    }
+
+    public void seachOnlineUser()
+    {
+        
+    }
+
+    /*public static void main(String[] args)
     {
         AccessDB accessDB = new AccessDB();
         try {
@@ -34,5 +49,5 @@ public class AccessDB
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }
