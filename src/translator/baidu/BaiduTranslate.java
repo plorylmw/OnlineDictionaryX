@@ -17,12 +17,12 @@ import java.util.regex.Pattern;
 
 public class BaiduTranslate
 {
-    public static void main(String[] args) throws IOException {
+    public String translate(String word) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
-        System.out.print("请输入你要查的单词:");
-        Scanner s = new Scanner(System.in);
-        String word = s.nextLine();
+        //System.out.print("请输入你要查的单词:");
+        //Scanner s = new Scanner(System.in);
+        //String word = s.nextLine();
         word = word.replaceAll(" ","+");
 
         //根据查找单词构造查找地址
@@ -49,14 +49,15 @@ public class BaiduTranslate
             Pattern getChinese1 = Pattern.compile("<span>(.*?)</span>"); //(?m)代表按行匹配
             Matcher m3 = getChinese1.matcher(means1);
 
-            System.out.println("释义:");
+            //System.out.println("释义:");
+            StringBuilder str = new StringBuilder();
             while (m2.find()&&m3.find()) {
                 //在Java中(.*?)是第1组，所以用group(1)
-                System.out.println("\t" + m2.group(1)+m3.group(1));
+                str.append("\t" + m2.group(1) + m3.group(1) + "\n");
             }
+            return str.toString();
         } else {
-            System.out.println("未查找到释义.");
-            System.exit(0);
+            return "未查找到释义.";
         }
     }
 }

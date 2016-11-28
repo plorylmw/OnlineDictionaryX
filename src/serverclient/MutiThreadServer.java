@@ -1,6 +1,8 @@
 package serverclient;
 
+import translator.baidu.BaiduTranslate;
 import translator.bing.BingTranslate;
+import translator.youdao.YoudaoTranslate;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,12 +87,12 @@ public class MutiThreadServer extends JFrame//多线程服务器
                     String words = inputFromClient.readUTF();
 
 
-                    String bingTranslateResult = bingTranslate(words);
+                    String translateResult = youdaoTranslate(words);
 
-                    outputToClient.writeUTF(bingTranslateResult);
+                    outputToClient.writeUTF(translateResult);
 
                     jta.append("Words received frome client: " + words + '\n');
-                    jta.append("explaination found: " + bingTranslateResult + '\n');
+                    jta.append("explaination found: " + translateResult + '\n');
                 }
             }
             catch(IOException e)
@@ -118,12 +120,34 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
         public String baiduTranslate(String words)
         {
-            return null;
+            StringBuilder result = new StringBuilder();
+            result.append("Baidu释义:" + '\n');
+
+            BaiduTranslate baiduTranslate = new BaiduTranslate();
+
+            try {
+                String baiduResult = baiduTranslate.translate(words);
+                result.append(baiduResult);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return result.toString();
         }
 
         public String youdaoTranslate(String words)
         {
-            return null;
+            StringBuilder result = new StringBuilder();
+            result.append("Youdao释义:" + '\n');
+
+            YoudaoTranslate youdaoTranslate = new YoudaoTranslate();
+
+            youdaoTranslate.translate(words);
+            String youdaoResult = youdaoTranslate.getAns();
+            //System.out.println("ss+"+youdaoResult);
+            result.append(youdaoResult);
+
+            return result.toString();
         }
     }
 }
