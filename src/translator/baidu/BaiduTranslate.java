@@ -35,25 +35,31 @@ public class BaiduTranslate
 
         response.close();
         //注意(?s)，意思是让'.'匹配换行符，默认情况下不匹配
-        Pattern searchMeanPattern = Pattern.compile("(?s)<div class=\"en-content\">.*?<div>.*?</div>.*?</div>");
+        //Pattern searchMeanPattern = Pattern.compile("(?s)<div class=\"en-content\">.*?<div>.*?</div>.*?</div>");
+        Pattern searchMeanPattern = Pattern.compile("(?s)<div class=\"content\" id=\"fanyi-wrapper\">.*?</div>.*?</div>");
         Matcher m1 = searchMeanPattern.matcher(result);
 
+        //System.out.println("1");
         if (m1.find()) {
+            //System.out.println("2");
             String means = m1.group();//所有解释，包含网页标签
             //System.out.println(m1);
             //System.out.println(means);
 
-            String means1=means;
-            Pattern getChinese = Pattern.compile("<strong>(.*?)</strong>"); //(?m)代表按行匹配
+            //String means1=means;
+            Pattern getChinese = Pattern.compile("<a href=\"(.*?)\">(.*?)</a>"); //(?m)代表按行匹配
             Matcher m2 = getChinese.matcher(means);
-            Pattern getChinese1 = Pattern.compile("<span>(.*?)</span>"); //(?m)代表按行匹配
-            Matcher m3 = getChinese1.matcher(means1);
 
+            //Pattern getChinese1 = Pattern.compile("<span>(.*?)</span>"); //(?m)代表按行匹配
+            //Matcher m3 = getChinese1.matcher(means1);
+
+            //System.out.println(m2.group().toString());
             //System.out.println("释义:");
+
             StringBuilder str = new StringBuilder();
-            while (m2.find()&&m3.find()) {
+            while (m2.find()/*&&m3.find()*/) {
                 //在Java中(.*?)是第1组，所以用group(1)
-                str.append("\t" + m2.group(1) + m3.group(1) + "\n");
+                str.append("\t" + m2.group(2) + /*m3.group(1) + */"\n");
             }
             return str.toString();
         } else {

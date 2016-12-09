@@ -1,5 +1,6 @@
 package serverclient;
 
+import database.AccessDB;
 import translator.baidu.BaiduTranslate;
 import translator.bing.BingTranslate;
 import translator.youdao.YoudaoTranslate;
@@ -12,7 +13,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.Date;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Created by limingwei on 16/11/20.
@@ -21,6 +25,8 @@ import java.util.Date;
 public class MutiThreadServer extends JFrame//多线程服务器
 {
     private JTextArea jta = new JTextArea();
+
+    private AccessDB accessDB = new AccessDB();//数据库成员
 
     public static void main(String[] args)
     {
@@ -36,6 +42,14 @@ public class MutiThreadServer extends JFrame//多线程服务器
         setSize(500, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
+
+        try {
+            accessDB.init();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }//链接到数据库
 
         try
         {
@@ -87,7 +101,9 @@ public class MutiThreadServer extends JFrame//多线程服务器
                     String words = inputFromClient.readUTF();
 
 
-                    String translateResult = youdaoTranslate(words);
+                    String translateResult = baiduTranslate(words);
+
+                    sleep(2000);
 
                     outputToClient.writeUTF(translateResult);
 
@@ -98,6 +114,8 @@ public class MutiThreadServer extends JFrame//多线程服务器
             catch(IOException e)
             {
                 System.err.println(e);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 

@@ -47,7 +47,7 @@ public class Client extends JFrame
 
         try
         {
-            Socket socket = new Socket("localhost", 8000);
+            Socket socket = new Socket("114.212.130.32", 8000);
             fromServer = new DataInputStream(socket.getInputStream());
             toServer = new DataOutputStream(socket.getOutputStream());
         }
