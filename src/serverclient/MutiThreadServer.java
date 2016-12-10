@@ -3,6 +3,7 @@ package serverclient;
 import database.AccessDB;
 import translator.baidu.BaiduTranslate;
 import translator.bing.BingTranslate;
+import translator.iciba.IcibaTranslate;
 import translator.youdao.YoudaoTranslate;
 
 import javax.swing.*;
@@ -203,16 +204,12 @@ public class MutiThreadServer extends JFrame//多线程服务器
         public String baiduTranslate(String words)
         {
             StringBuilder result = new StringBuilder();
-            result.append("Baidu释义:" + '\n');
+            result.append("iciba释义:" + '\n');
 
-            BaiduTranslate baiduTranslate = new BaiduTranslate();
+            IcibaTranslate baiduTranslate = new IcibaTranslate();
 
-            try {
-                String baiduResult = baiduTranslate.translate(words);
-                result.append(baiduResult);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            String baiduResult = baiduTranslate.translate(words);
+            result.append(baiduResult);
 
             return result.toString();
         }

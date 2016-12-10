@@ -29,9 +29,13 @@ public class BaiduTranslate
         HttpGet getWordMean = new HttpGet("http://dict.baidu.com/s?wd=" + word + "&go=%E6%90%9C%E7%B4%A2&qs=n&form=Z9LH5&pq="+word);
         CloseableHttpResponse response = httpClient.execute(getWordMean);//取得返回的网页源码
 
+        //HttpGet getWordMean = new HttpGet("http://wwww.aciba.com/" + word + "&go=%E6%90%9C%E7%B4%A2&qs=n&form=Z9LH5&pq="+word);
+        //CloseableHttpResponse response = httpClient.execute(getWordMean);//取得返回的网页源码
+
+
         String result = EntityUtils.toString(response.getEntity());
 
-        //System.out.println(result);
+        System.out.println(result);
 
         response.close();
         //注意(?s)，意思是让'.'匹配换行符，默认情况下不匹配
@@ -66,4 +70,9 @@ public class BaiduTranslate
             return "未查找到释义.";
         }
     }
+
+    /*public static void main(String[] args) throws IOException {
+        BaiduTranslate baiduTranslate = new BaiduTranslate();
+        baiduTranslate.translate("happy");
+    }*/
 }
