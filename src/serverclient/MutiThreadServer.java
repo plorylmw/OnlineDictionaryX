@@ -15,6 +15,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 
 import static java.lang.Thread.sleep;
 
@@ -22,11 +25,16 @@ import static java.lang.Thread.sleep;
  * Created by limingwei on 16/11/20.
  */
 
+
 public class MutiThreadServer extends JFrame//多线程服务器
 {
     private JTextArea jta = new JTextArea();
-
     private AccessDB accessDB = new AccessDB();//数据库成员
+    private HashMap<Integer, String> onlineUsrs = new HashMap<>();
+    private HashMap<String, DataOutputStream> outputToClientTotal = new HashMap<>();
+
+    private static int session_id = 0;
+
 
     public static void main(String[] args)
     {
@@ -98,25 +106,81 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
                 while(true)
                 {
-                    String words = inputFromClient.readUTF();
+                    String request = inputFromClient.readUTF();
+                    String reply = dealRequest(request, outputToClient);
 
+                    System.out.println(reply);
 
-                    String translateResult = baiduTranslate(words);
+                    outputToClient.writeUTF(reply);
 
-                    sleep(2000);
-
-                    outputToClient.writeUTF(translateResult);
-
-                    jta.append("Words received frome client: " + words + '\n');
-                    jta.append("explaination found: " + translateResult + '\n');
+                    jta.append("Request frome client: " + request + '\n');
+                    jta.append("Reply to client: " + reply + '\n');
                 }
             }
             catch(IOException e)
             {
                 System.err.println(e);
-            } catch (InterruptedException e) {
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+
+        String dealRequest(String request, DataOutputStream dataOutputStream) throws SQLException
+        {
+            StringBuilder reply = new StringBuilder();
+
+            String[] splitRequest = request.split("&");
+
+            if(splitRequest[0].compareTo("register") == 0)
+            {
+                synchronized (accessDB)
+                {
+                    boolean flag = accessDB.register(splitRequest[1], splitRequest[2]);
+                    if (flag)
+                        reply.append("success");
+                    else
+                        reply.append("fail");
+                }
+            }
+            if(splitRequest[0].compareTo("login") == 0)
+            {
+                synchronized (accessDB)
+                {
+                    boolean flag = accessDB.login(splitRequest[1], splitRequest[2]);
+                    if (flag)
+                    {
+                        System.out.println("hit");
+                        reply.append("success");
+                        synchronized (onlineUsrs)
+                        {
+                            onlineUsrs.put(session_id++, splitRequest[1]);
+                        }
+                        outputToClientTotal.put(splitRequest[1], dataOutputStream);//将用户与对应的输出流绑定
+                    }
+                    else
+                        reply.append("fail");
+                }
+            }
+            if(splitRequest[0].compareTo("getword") == 0)
+            {
+                String word = splitRequest[1];
+                reply.append(baiduTranslate(word) + "&");
+                reply.append(bingTranslate(word) + "&");
+                reply.append(youdaoTranslate(word) + "&");
+                synchronized (accessDB)
+                {
+                    reply.append(accessDB.getPraise(word));
+                }
+            }
+            if(splitRequest[0].compareTo("love") == 0)
+            {
+                synchronized (accessDB)
+                {
+                    accessDB.addPraise(splitRequest[1], splitRequest[2]);
+                }
+            }
+
+            return reply.toString();
         }
 
         public String bingTranslate(String words)
@@ -162,7 +226,6 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
             youdaoTranslate.translate(words);
             String youdaoResult = youdaoTranslate.getAns();
-            //System.out.println("ss+"+youdaoResult);
             result.append(youdaoResult);
 
             return result.toString();
