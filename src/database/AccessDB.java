@@ -9,8 +9,7 @@ public class AccessDB
 {
     private Statement statement;
 
-    public void init() throws SQLException, ClassNotFoundException
-    {
+    public void init() throws SQLException, ClassNotFoundException {
         Class.forName("com.mysql.jdbc.Driver");
         System.out.println("Driver loaded");
 
@@ -21,8 +20,7 @@ public class AccessDB
         statement = connection.createStatement();
     }
 
-    public boolean register(String usrName, String passWord) throws SQLException
-    {
+    public boolean register(String usrName, String passWord) throws SQLException {
         ResultSet resultSet = statement.executeQuery("select * from User;");
         boolean flag = true;
         while(resultSet.next())
@@ -43,8 +41,7 @@ public class AccessDB
         return flag;
     }
 
-    public boolean login(String usrName, String passWord) throws SQLException
-    {
+    public boolean login(String usrName, String passWord) throws SQLException {
         ResultSet resultSet = statement.executeQuery("select * from User;");
         boolean flag = false;
         while(resultSet.next())
@@ -59,8 +56,7 @@ public class AccessDB
         return flag;
     }
 
-    public void addPraise(String word, String comeFrom) throws SQLException
-    {
+    public void addPraise(String ursName, String word, String comeFrom) throws SQLException {
         ResultSet resultSet = statement.executeQuery("select * from WordsRecord;");
         boolean flag = false;
         while(resultSet.next())
@@ -73,34 +69,41 @@ public class AccessDB
         }
         if(flag)
         {
-            if(comeFrom.compareTo("Baidu") == 0)
+            if(comeFrom.compareTo("baidu") == 0)
                 statement.execute("update WordsRecord set fromBaidu = fromBaidu + 1 where word = '" + word + "'");
-            if(comeFrom.compareTo("Youdao") == 0)
+            if(comeFrom.compareTo("youdao") == 0)
                 statement.execute("update WordsRecord set fromYoudao = fromYoudao + 1 where word = '" + word + "'");
-            if(comeFrom.compareTo("Bing") == 0)
+            if(comeFrom.compareTo("bing") == 0)
                 statement.execute("update WordsRecord set fromBing = fromBing + 1 where word = '" + word + "'");
-
         }
         else
         {
-            if(comeFrom.compareTo("Baidu") == 0)
+            if(comeFrom.compareTo("baidu") == 0)
                 statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
                                   "values ('" + word + "', 1, 0, 0);"
                                  );
-            if(comeFrom.compareTo("Youdao") == 0)
+            if(comeFrom.compareTo("youdao") == 0)
                 statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
-                        "values ('" + word + "', 0, 1, 0);"
-                );
-            if(comeFrom.compareTo("Bing") == 0)
+                                  "values ('" + word + "', 0, 1, 0);"
+                                 );
+            if(comeFrom.compareTo("bing") == 0)
                 statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
-                        "values ('" + word + "', 0, 0, 1);"
-                );
+                                  "values ('" + word + "', 0, 0, 1);"
+                                 );
         }
+
+        if(comeFrom.compareTo("baidu") == 0)
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
+                              "values ('" + ursName + "','" + word + "', 'Yes' , 'No', 'No'");
+        if(comeFrom.compareTo("bing") == 0)
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
+                              "values ('" + ursName + "','" + word + "', 'No' , 'Yes', 'No'");
+        if(comeFrom.compareTo("youdao") == 0)
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
+                              "values ('" + ursName + "','" + word + "', 'No' , 'No', 'Yes'");
     }
 
-
-    public String getPraise(String word) throws SQLException
-    {
+    public String getPraise(String word) throws SQLException {
         ResultSet resultSet = statement.executeQuery("select * from WordsRecord where word = '" + word + "'");
 
         StringBuilder res = new StringBuilder();
@@ -137,6 +140,71 @@ public class AccessDB
         if(flag == false)
             res.append("012");
         return res.toString();
+    }
+
+    public String praiseRecord(String usrName, String word) throws SQLException {
+        StringBuilder res = new StringBuilder();
+
+        ResultSet resultSet = statement.executeQuery("select * from PraiseRecord;");
+
+        boolean flag_baidu = false;
+        boolean flag_bing = false;
+        boolean flag_youdao = false;
+
+        while(resultSet.next())
+        {
+            if(resultSet.getString("usrName").compareTo(usrName) == 0 && resultSet.getString("word").compareTo(word) == 0)
+            {
+                if(resultSet.getString("baidu").compareTo("Yes") == 0)
+                    flag_baidu = true;
+                if(resultSet.getString("bing").compareTo("Yes") == 0)
+                    flag_bing = true;
+                if(resultSet.getString("youdao").compareTo("Yes") == 0)
+                    flag_youdao = true;
+            }
+        }
+
+        if(flag_baidu)
+            res.append("1");
+        else
+            res.append("0");
+        if(flag_bing)
+            res.append("1");
+        else
+            res.append("0");
+        if(flag_youdao)
+            res.append("1");
+        else
+            res.append("0");
+
+        return res.toString();
+    }
+
+    public void addFriend(String friend1, String friend2) throws SQLException {
+        statement.execute("insert into FriendRecord(friend1, friend2)" +
+                          "values('" + friend1 + "','" + friend2 + "')");
+    }
+
+    public String selectFriend(String usrName) throws SQLException {
+        StringBuilder res = new StringBuilder();
+        ResultSet resultSet = statement.executeQuery("select * from FriendRecord;");
+        while(resultSet.next())
+        {
+            //System.out.println(resultSet.getString("userName") + "\t" + resultSet.getString("userKey"));
+            if (resultSet.getString("Friend1").compareTo(usrName) == 0)
+            {
+                res.append(resultSet.getString("Friend2") + "&");
+            }
+        }
+        return res.toString();
+    }
+
+    public void deleteFriend(String friend1, String friend2) throws SQLException {
+        statement.execute("delete from FriendRecord(friend1, friend2)" +
+                          "where friend1 = '" + friend1 + "' AND friend2 = '" + friend2 + "'");
+
+        statement.execute("delete from FriendRecord(friend1, friend2)" +
+                "where friend1 = '" + friend2 + "' AND friend2 = '" + friend1 + "'");
     }
 
     /*public static void main(String[] args)

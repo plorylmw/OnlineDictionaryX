@@ -11,14 +11,12 @@ import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
@@ -98,8 +96,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
             this.socket = socket;
         }
 
-        public void run()
-        {
+        public void run() {
             try
             {
                 DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
@@ -126,66 +123,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
             }
         }
 
-        String dealRequest(String request, DataOutputStream dataOutputStream) throws SQLException
-        {
-            StringBuilder reply = new StringBuilder();
-
-            String[] splitRequest = request.split("&");
-
-            if(splitRequest[0].compareTo("register") == 0)
-            {
-                synchronized (accessDB)
-                {
-                    boolean flag = accessDB.register(splitRequest[1], splitRequest[2]);
-                    if (flag)
-                        reply.append("success");
-                    else
-                        reply.append("fail");
-                }
-            }
-            if(splitRequest[0].compareTo("login") == 0)
-            {
-                synchronized (accessDB)
-                {
-                    boolean flag = accessDB.login(splitRequest[1], splitRequest[2]);
-                    if (flag)
-                    {
-                        System.out.println("hit");
-                        reply.append("success");
-                        synchronized (onlineUsrs)
-                        {
-                            onlineUsrs.put(session_id++, splitRequest[1]);
-                        }
-                        outputToClientTotal.put(splitRequest[1], dataOutputStream);//将用户与对应的输出流绑定
-                    }
-                    else
-                        reply.append("fail");
-                }
-            }
-            if(splitRequest[0].compareTo("getword") == 0)
-            {
-                String word = splitRequest[1];
-                reply.append(baiduTranslate(word) + "&");
-                reply.append(bingTranslate(word) + "&");
-                reply.append(youdaoTranslate(word) + "&");
-                synchronized (accessDB)
-                {
-                    reply.append(accessDB.getPraise(word));
-                }
-            }
-            if(splitRequest[0].compareTo("love") == 0)
-            {
-                synchronized (accessDB)
-                {
-                    accessDB.addPraise(splitRequest[1], splitRequest[2]);
-                }
-            }
-
-            return reply.toString();
-        }
-
-        public String bingTranslate(String words)
-        {
+        public String bingTranslate(String words) {
             StringBuilder result = new StringBuilder();
             result.append("Bing释义:" + '\n');
 
@@ -201,8 +139,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
             return result.toString();
         }
 
-        public String baiduTranslate(String words)
-        {
+        public String baiduTranslate(String words) {
             StringBuilder result = new StringBuilder();
             result.append("iciba释义:" + '\n');
 
@@ -214,8 +151,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
             return result.toString();
         }
 
-        public String youdaoTranslate(String words)
-        {
+        public String youdaoTranslate(String words) {
             StringBuilder result = new StringBuilder();
             result.append("Youdao释义:" + '\n');
 
@@ -227,5 +163,345 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
             return result.toString();
         }
+
+        //------------------------------------------------------------------
+
+        public String dealRegister(String request) throws SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            synchronized (accessDB)
+            {
+                boolean flag = accessDB.register(splitRequest[1], splitRequest[2]);
+                if (flag)
+                    reply.append("success");
+                else
+                    reply.append("fail");
+            }
+            return reply.toString();
+        }
+
+        public String dealLogin(String request, DataOutputStream dataOutputStream) throws IOException, SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            synchronized (accessDB)
+            {
+                boolean flag = accessDB.login(splitRequest[1], splitRequest[2]);//数据库查询是否有该用户
+                if(flag)
+                {
+                    synchronized (onlineUsrs)//查看该用户是否在线
+                    {
+                       if(onlineUsrs.containsValue(splitRequest[1]))
+                       {
+                           String logoutName = splitRequest[1];
+
+                           String friendSet;
+                           friendSet = accessDB.selectFriend(logoutName);
+
+                           String[] friends = friendSet.split("&");
+
+
+                           for (int i = 0; i < friends.length; i++)
+                           {
+                               if (onlineUsrs.containsValue(friends[i]))
+                               {
+                                   synchronized (outputToClientTotal)
+                                   {
+                                       DataOutputStream value = outputToClientTotal.get(friends[i]);
+                                       StringBuilder str = new StringBuilder();
+                                       str.append("offline" + "&");
+                                       str.append(logoutName);
+                                       value.writeUTF(str.toString());
+                                   }
+                               }
+                           }
+
+                           synchronized (onlineUsrs)
+                           {
+                               Collection<String> collection = onlineUsrs.values();
+                               collection.remove(logoutName);
+                           }
+                           synchronized (outputToClientTotal)
+                           {
+                               outputToClientTotal.remove(logoutName);
+                           }
+                       }
+                    }
+                }
+                if (flag)
+                {
+                    reply.append(session_id);
+
+                    String friendSet;
+                    synchronized (accessDB)
+                    {
+                        friendSet = accessDB.selectFriend(splitRequest[1]);
+                    }
+                    String[] friends = friendSet.split("&");
+                    synchronized (onlineUsrs)
+                    {
+                        for (int i = 0; i < friends.length; i++)
+                        {
+                            if (onlineUsrs.containsValue(friends[i]))
+                            {
+                                reply.append("&" + friends[i] + "&" + "1");
+                                synchronized (outputToClientTotal)
+                                {
+                                    DataOutputStream value = outputToClientTotal.get(friends[i]);
+                                    StringBuilder str = new StringBuilder();
+                                    str.append("online" + "&");
+                                    str.append(splitRequest[1]);
+                                    value.writeUTF(str.toString());
+                                }
+                            }
+                            else
+                                reply.append("&" + friends[i] + "&" + "0");
+                        }
+                    }
+
+                    synchronized (onlineUsrs)
+                    {
+                        onlineUsrs.put(session_id, splitRequest[1]);
+                        session_id += 1;
+                    }
+                    synchronized (outputToClientTotal)
+                    {
+                        outputToClientTotal.put(splitRequest[1], dataOutputStream);//将用户与对应的输出流绑定
+                    }
+                }
+                else
+                    reply.append("fail");
+            }
+            return reply.toString();
+        }
+
+        public String dealGetWord(String request) throws SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String word = splitRequest[2];
+            String usrName = onlineUsrs.get(tmp_session_id);
+
+
+            reply.append(baiduTranslate(word) + "&");
+            reply.append(bingTranslate(word) + "&");
+            reply.append(youdaoTranslate(word) + "&");
+            synchronized (accessDB)//返回该单词的总体点赞情况
+            {
+                reply.append(accessDB.getPraise(word) + "&");
+            }
+            synchronized (accessDB)//返回该用户对该单词的点赞情况
+            {
+                reply.append(accessDB.praiseRecord(usrName, word));
+            }
+            return reply.toString();
+        }
+
+        public String dealLove(String request) throws SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            synchronized (accessDB)
+            {
+                accessDB.addPraise(onlineUsrs.get(tmp_session_id), splitRequest[2], splitRequest[3]);
+            }
+            return reply.toString();
+        }
+
+        public String dealLogout(String request) throws SQLException, IOException {
+            StringBuilder reply = new StringBuilder();
+
+            String[] splitRequest = request.split("&");
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String logoutName = onlineUsrs.get(tmp_session_id);
+
+            String friendSet;
+            synchronized (accessDB)
+            {
+                friendSet = accessDB.selectFriend(logoutName);
+            }
+
+            String[] friends = friendSet.split("&");
+
+            synchronized (onlineUsrs)
+            {
+                for (int i = 0; i < friends.length; i++)
+                {
+                    if (onlineUsrs.containsValue(friends[i]))
+                    {
+                        synchronized (outputToClientTotal)
+                        {
+                            DataOutputStream value = outputToClientTotal.get(friends[i]);
+                            StringBuilder str = new StringBuilder();
+                            str.append("offline" + "&");
+                            str.append(logoutName);
+                            value.writeUTF(str.toString());
+                        }
+                    }
+                }
+            }
+
+            synchronized (onlineUsrs)
+            {
+                onlineUsrs.remove(tmp_session_id);
+            }
+            synchronized (outputToClientTotal)
+            {
+                outputToClientTotal.remove(logoutName);
+            }
+
+            reply.append("success");
+            return reply.toString();
+        }
+
+        public String dealMessage(String request) throws IOException {
+
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String sendTo = splitRequest[2];
+            String message = splitRequest[3];
+
+            boolean flag = true;
+
+            String sendFrom = onlineUsrs.get(tmp_session_id);
+            DataOutputStream value = outputToClientTotal.get(sendTo);
+            value.writeUTF("message" + "&"  + sendFrom + "&" + message + "&0");
+
+            if(flag)
+                reply.append("success");
+            else
+                reply.append(("fail"));
+
+            return reply.toString();
+        }
+
+        public String dealAddRequest(String request) throws IOException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String sendTo = splitRequest[2];
+
+            boolean flag = true;
+            String requestName = onlineUsrs.get(tmp_session_id);
+            DataOutputStream value = outputToClientTotal.get(sendTo);
+            value.writeUTF("addrequest" + "&" + requestName);
+
+            if(flag)
+                reply.append("success");
+            else
+                reply.append(("fail"));
+
+            return reply.toString();
+        }
+
+        public String dealReplyAddRequest(String request) throws IOException, SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String sendTo = splitRequest[2];
+
+            boolean flag = true;
+            String replyName = onlineUsrs.get(tmp_session_id);
+            DataOutputStream value = outputToClientTotal.get(sendTo);
+            value.writeUTF(splitRequest[0] + "&" + replyName);
+
+            if(splitRequest[0].compareTo("agree") == 0)
+            {
+                accessDB.addFriend(replyName, sendTo);
+                accessDB.addFriend(sendTo, replyName);
+            }
+
+            if(flag)
+                reply.append("success");
+            else
+                reply.append(("fail"));
+
+            return reply.toString();
+        }
+
+        public String dealDeleteFriend(String request) throws SQLException, IOException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String requestName;
+            synchronized (onlineUsrs) {
+                requestName = onlineUsrs.get(tmp_session_id);
+            }
+            String deleteName = splitRequest[2];
+
+            synchronized (accessDB)
+            {
+                accessDB.deleteFriend(requestName, deleteName);
+            }
+
+            synchronized (onlineUsrs)
+            {
+                if(onlineUsrs.containsValue(deleteName))
+                {
+                    synchronized (outputToClientTotal)
+                    {
+                        DataOutputStream value = outputToClientTotal.get(deleteName);
+                        StringBuilder str = new StringBuilder();
+                        str.append("delete" + "&" + requestName);
+                        value.writeUTF(str.toString());
+                    }
+                }
+            }
+
+            return reply.toString();
+        }
+
+        public String dealRequest(String request, DataOutputStream dataOutputStream) throws SQLException, IOException
+        {
+
+            String[] splitRequest = request.split("&");
+
+            //用户注册
+            if(splitRequest[0].compareTo("register") == 0)
+                return dealRegister(request);
+
+            //查询单词
+            if(splitRequest[0].compareTo("getword") == 0)
+                return dealGetWord(request);
+
+            //用户点赞
+            if(splitRequest[0].compareTo("love") == 0)
+                return dealLove(request);
+
+            //用户登录
+            if(splitRequest[0].compareTo("login") == 0)
+                return dealLogin(request, dataOutputStream);
+
+            //用户登出
+            if(splitRequest[0].compareTo("logout") == 0)
+                return dealLogout(request);
+
+            //发送消息
+            if(splitRequest[0].compareTo("message") == 0)
+                return dealMessage(request);
+
+            //申请好友
+            if(splitRequest[0].compareTo("addrequest") == 0)
+                return dealAddRequest(request);
+
+            //同意申请
+            if(splitRequest[0].compareTo("agree") == 0 || splitRequest[0].compareTo("decline") == 0)
+                return dealReplyAddRequest(request);
+
+            //删除好友
+            if(splitRequest[0].compareTo("delete") == 0)
+                return dealDeleteFriend(request);
+
+            return null;
+        }
+
+
     }
 }
