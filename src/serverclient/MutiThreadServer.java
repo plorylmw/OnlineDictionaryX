@@ -87,6 +87,22 @@ public class MutiThreadServer extends JFrame//多线程服务器
         }
     }
 
+    public static String encode(String str)
+    {
+        str = str.replaceAll("%", "%9");
+        str = str.replaceAll("&", "%8");
+        return str;
+    }
+
+    public static String decode(String str)
+    {
+        str = str.replaceAll("%8", "&");
+        str = str.replaceAll("%9", "%");
+        return str;
+    }
+
+
+
     class HandleAClient implements Runnable
     {
         private Socket socket;
@@ -107,17 +123,17 @@ public class MutiThreadServer extends JFrame//多线程服务器
                     String request = inputFromClient.readUTF();
                     String reply = dealRequest(request, outputToClient);
 
-                    System.out.println(reply);
-
-                    outputToClient.writeUTF(reply);
 
                     jta.append("Request frome client: " + request + '\n');
+                    if(reply.compareTo("") == 0)
+                        continue;
+
+                    outputToClient.writeUTF(reply);
                     jta.append("Reply to client: " + reply + '\n');
                 }
             }
-            catch(IOException e)
-            {
-                System.err.println(e);
+            catch(IOException e) {
+                //System.err.println(e);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -125,7 +141,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
         public String bingTranslate(String words) {
             StringBuilder result = new StringBuilder();
-            result.append("Bing释义:" + '\n');
+            //result.append("Bing释义:" + '\n');
 
             BingTranslate bingTranslate = new BingTranslate();
 
@@ -141,7 +157,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
         public String baiduTranslate(String words) {
             StringBuilder result = new StringBuilder();
-            result.append("iciba释义:" + '\n');
+            //result.append("iciba释义:" + '\n');
 
             IcibaTranslate baiduTranslate = new IcibaTranslate();
 
@@ -153,7 +169,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
         public String youdaoTranslate(String words) {
             StringBuilder result = new StringBuilder();
-            result.append("Youdao释义:" + '\n');
+            //result.append("Youdao释义:" + '\n');
 
             YoudaoTranslate youdaoTranslate = new YoudaoTranslate();
 
@@ -170,6 +186,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
             StringBuilder reply = new StringBuilder();
             String[] splitRequest = request.split("&");
 
+            reply.append("register" + "&");
             synchronized (accessDB)
             {
                 boolean flag = accessDB.register(splitRequest[1], splitRequest[2]);
@@ -182,6 +199,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
         }
 
         public String dealLogin(String request, DataOutputStream dataOutputStream) throws IOException, SQLException {
+
             StringBuilder reply = new StringBuilder();
             String[] splitRequest = request.split("&");
 
@@ -231,6 +249,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
                 }
                 if (flag)
                 {
+                    reply.append("login" + "&");
                     reply.append(session_id);
 
                     String friendSet;
@@ -255,8 +274,10 @@ public class MutiThreadServer extends JFrame//多线程服务器
                                     value.writeUTF(str.toString());
                                 }
                             }
-                            else
+                            else if(friends[i].compareTo("") != 0 )
                                 reply.append("&" + friends[i] + "&" + "0");
+                            else
+                                reply.append("");
                         }
                     }
 
@@ -271,7 +292,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
                     }
                 }
                 else
-                    reply.append("fail");
+                    reply.append("login&fail");
             }
             return reply.toString();
         }
@@ -284,10 +305,12 @@ public class MutiThreadServer extends JFrame//多线程服务器
             String word = splitRequest[2];
             String usrName = onlineUsrs.get(tmp_session_id);
 
+            reply.append(encode("getword") + "&");
 
-            reply.append(baiduTranslate(word) + "&");
-            reply.append(bingTranslate(word) + "&");
-            reply.append(youdaoTranslate(word) + "&");
+            reply.append(encode(baiduTranslate(word)) + "&");
+            reply.append(encode(bingTranslate(word)) + "&");
+            reply.append(encode(youdaoTranslate(word)) + "&");
+
             synchronized (accessDB)//返回该单词的总体点赞情况
             {
                 reply.append(accessDB.getPraise(word) + "&");
@@ -306,6 +329,22 @@ public class MutiThreadServer extends JFrame//多线程服务器
             synchronized (accessDB)
             {
                 accessDB.addPraise(onlineUsrs.get(tmp_session_id), splitRequest[2], splitRequest[3]);
+            }
+            return reply.toString();
+        }
+
+        public String dealDisLove(String request) throws SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+
+            String usrName = onlineUsrs.get(tmp_session_id);
+            String word = splitRequest[2];
+            String comeFrom = splitRequest[3];
+
+            synchronized (accessDB)
+            {
+                accessDB.deletePraise(usrName, word, comeFrom);
             }
             return reply.toString();
         }
@@ -352,7 +391,6 @@ public class MutiThreadServer extends JFrame//多线程服务器
                 outputToClientTotal.remove(logoutName);
             }
 
-            reply.append("success");
             return reply.toString();
         }
 
@@ -365,16 +403,9 @@ public class MutiThreadServer extends JFrame//多线程服务器
             String sendTo = splitRequest[2];
             String message = splitRequest[3];
 
-            boolean flag = true;
-
             String sendFrom = onlineUsrs.get(tmp_session_id);
             DataOutputStream value = outputToClientTotal.get(sendTo);
-            value.writeUTF("message" + "&"  + sendFrom + "&" + message + "&0");
-
-            if(flag)
-                reply.append("success");
-            else
-                reply.append(("fail"));
+            value.writeUTF("message" + "&"  + sendFrom + "&" + message);
 
             return reply.toString();
         }
@@ -386,15 +417,12 @@ public class MutiThreadServer extends JFrame//多线程服务器
             int tmp_session_id = Integer.parseInt(splitRequest[1]);
             String sendTo = splitRequest[2];
 
-            boolean flag = true;
             String requestName = onlineUsrs.get(tmp_session_id);
             DataOutputStream value = outputToClientTotal.get(sendTo);
             value.writeUTF("addrequest" + "&" + requestName);
 
-            if(flag)
-                reply.append("success");
-            else
-                reply.append(("fail"));
+            if(!onlineUsrs.containsValue(sendTo))
+                reply.append("nosuchuser");
 
             return reply.toString();
         }
@@ -415,12 +443,17 @@ public class MutiThreadServer extends JFrame//多线程服务器
             {
                 accessDB.addFriend(replyName, sendTo);
                 accessDB.addFriend(sendTo, replyName);
-            }
 
-            if(flag)
-                reply.append("success");
-            else
-                reply.append(("fail"));
+                if(onlineUsrs.containsValue(replyName))
+                    value.writeUTF("newfriend" + "&" + replyName + "&1");
+                else
+                    value.writeUTF("newfriend" + "&" + replyName + "&0");
+
+                if(onlineUsrs.containsValue(sendTo))
+                    reply.append("newfriend" + "&" + sendTo + "&1");
+                else
+                    reply.append("newfriend" + "&" + sendTo + "&0");
+            }
 
             return reply.toString();
         }
@@ -455,6 +488,7 @@ public class MutiThreadServer extends JFrame//多线程服务器
                 }
             }
 
+            reply.append("delete" + "&" + deleteName);
             return reply.toString();
         }
 
@@ -474,6 +508,10 @@ public class MutiThreadServer extends JFrame//多线程服务器
             //用户点赞
             if(splitRequest[0].compareTo("love") == 0)
                 return dealLove(request);
+
+            //用户取消赞
+            if(splitRequest[0].compareTo("dislove") == 0)
+                return dealDisLove(request);
 
             //用户登录
             if(splitRequest[0].compareTo("login") == 0)
@@ -501,7 +539,5 @@ public class MutiThreadServer extends JFrame//多线程服务器
 
             return null;
         }
-
-
     }
 }

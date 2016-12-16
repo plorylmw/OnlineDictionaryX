@@ -22,8 +22,11 @@ public class YoudaoTranslate {
     }
 
     public String getAns() {
-        System.out.println(ans);
-        return ans;
+        //System.out.println(ans);
+        if(ans.contains("on\":[\"") == true)
+            return "未找到释义.";
+        else
+            return ans;
     }
 
 
@@ -44,15 +47,9 @@ public class YoudaoTranslate {
                 OutputStreamWriter osw = new OutputStreamWriter(os);
                 BufferedWriter bw = new BufferedWriter(osw);
 
-
                 StringBuffer buf = new StringBuffer();
                 buf.append("keyfrom=javaproject&key=671918409&type=data&doctype=json&version=1.1&q=");
 
-                //String str;
-                //System.out.print("请输入要查找的单词:");
-                //Scanner scanner = new Scanner(System.in);
-                //str = scanner.next();
-                //System.out.println("ss+"+words);
                 buf.append(words);
 
                 bw.write(buf.toString());
@@ -65,7 +62,6 @@ public class YoudaoTranslate {
                 String line;
                 StringBuilder builder = new StringBuilder();
                 while ((line = br.readLine()) != null) {
-                    //System.out.println(line);
                     builder.append(line);
                 }
 
@@ -79,16 +75,17 @@ public class YoudaoTranslate {
 
                 String[] result = convert(builder.toString());
 
-                //System.out.println("释义:");
 
                 StringBuilder tmp = new StringBuilder();
                 for (int i = 0; i < result.length; i++)
                 {
                     //System.out.println(result[i]);
-                    tmp.append(result[i] + "\n");
+                    tmp.append(result[i]);
+                    if(i < result.length - 1)
+                        tmp.append("\n");
                 }
                 ans = tmp.toString();
-                System.out.println(ans);
+                //System.out.println(ans);
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -105,5 +102,16 @@ public class YoudaoTranslate {
             String[] arry = sub_result.split("\",\"");
             return arry;
         }
+    }
+
+    public static void main(String[] args)
+    {
+        StringBuilder result = new StringBuilder();
+
+        YoudaoTranslate youdaoTranslate = new YoudaoTranslate();
+
+        youdaoTranslate.translate("sorry");
+        String youdaoResult = youdaoTranslate.getAns();
+        System.out.println(youdaoResult);
     }
 }

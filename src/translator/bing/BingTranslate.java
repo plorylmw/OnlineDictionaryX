@@ -20,9 +20,6 @@ public class BingTranslate
     public String translate(String word) throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
 
-        //System.out.print("请输入你要查的单词:");
-        //Scanner s = new Scanner(System.in);
-        //String word = s.nextLine();
         word = word.replaceAll(" ","+");
 
         //根据查找单词构造查找地址
@@ -36,21 +33,17 @@ public class BingTranslate
         Matcher m1 = searchMeanPattern.matcher(result);
         if (m1.find())
         {
-            String means = m1.group();//所有解释，包含网页标签
+            String means = m1.group(1);//所有解释，包含网页标签
+            System.out.println(means);
             String[] m2=means.split("，");
-            System.out.println("释义:");
-            if(m2.length>=3)
+            //System.out.println(m2[1]);
+            if(means.compareTo("\"词典\"") == 0)
             {
-                StringBuilder str = new StringBuilder();
-                String[] p=m2[3].split("\"");
-                String[] m=p[0].split(" ");
-                for(int i=0;i*2<m.length;i++)
-                    str.append("\t"+m[i*2]+" "+m[i*2+1] + "\n");
-                return str.toString();
+                return "未找到释义.";
             }
             else
             {
-                return "未找到释义.";
+                return m2[m2.length - 1];
             }
         }
         else
@@ -58,4 +51,10 @@ public class BingTranslate
             return "未找到释义.";
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        BingTranslate bingTranslate = new BingTranslate();
+        System.out.println(bingTranslate.translate("sorry about"));
+    }
+
 }

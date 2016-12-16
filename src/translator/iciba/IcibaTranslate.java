@@ -67,8 +67,8 @@ public class IcibaTranslate
             res = HttpClientUtil.requestByGetMethod(url);
             System.out.println(res);
 
-            Pattern getPs = Pattern.compile("<ps>(.*?)</ps>"); //(?m)代表按行匹配
-            Matcher m0 = getPs.matcher(res);
+            //Pattern getPs = Pattern.compile("<ps>(.*?)</ps>"); //(?m)代表按行匹配
+            //Matcher m0 = getPs.matcher(res);
 
             Pattern getPos = Pattern.compile("<pos>(.*?)</pos>"); //(?m)代表按行匹配
             Matcher m1 = getPos.matcher(res);
@@ -76,11 +76,17 @@ public class IcibaTranslate
             Pattern getAcceptation = Pattern.compile("<acceptation>(.*?)/n</acceptation>"); //(?m)代表按行匹配
             Matcher m2 = getAcceptation.matcher(res);
 
-            while(m0.find() && m1.find() && m2.find())
+            boolean flag = false;
+
+            while(m1.find() && m2.find())
             {
+                flag = true;
                 //System.out.println(m0.group(1) + '\t' + m1.group(1) + '\t' + m2.group(1));
-                ret.append(m0.group(1) + '\t' + m1.group(1) + '\t' + m2.group(1) + '\n');
+                ret.append(m1.group(1) + " " + m2.group(1) + '\n');
             }
+
+            if(!flag)
+                ret.append("未找到释义.");
 
 
         } catch (Exception e) {

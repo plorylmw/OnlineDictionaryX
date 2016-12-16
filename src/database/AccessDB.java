@@ -79,28 +79,47 @@ public class AccessDB
         else
         {
             if(comeFrom.compareTo("baidu") == 0)
-                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
+                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing) " +
                                   "values ('" + word + "', 1, 0, 0);"
                                  );
             if(comeFrom.compareTo("youdao") == 0)
-                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
+                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing) " +
                                   "values ('" + word + "', 0, 1, 0);"
                                  );
             if(comeFrom.compareTo("bing") == 0)
-                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing)" +
+                statement.execute("insert into WordsRecord(word, fromBaidu, fromYoudao, fromBing) " +
                                   "values ('" + word + "', 0, 0, 1);"
                                  );
         }
 
-        if(comeFrom.compareTo("baidu") == 0)
-            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
-                              "values ('" + ursName + "','" + word + "', 'Yes' , 'No', 'No'");
+        if(comeFrom.compareTo("baidu") == 0) {
+            System.out.println("insert into PraiseRecord(usrName, word, baidu, bing, youdao) " +
+                    "values('" + ursName + "','" + word + "', 'Yes' , 'No', 'No')");
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao) " +
+                    "values('" + ursName + "','" + word + "', 'Yes' , 'No', 'No')");
+        }
         if(comeFrom.compareTo("bing") == 0)
-            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
-                              "values ('" + ursName + "','" + word + "', 'No' , 'Yes', 'No'");
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao) " +
+                              "values('" + ursName + "','" + word + "', 'No' , 'Yes', 'No')");
         if(comeFrom.compareTo("youdao") == 0)
-            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao)" +
-                              "values ('" + ursName + "','" + word + "', 'No' , 'No', 'Yes'");
+            statement.execute("insert into PraiseRecord(usrName, word, baidu, bing, youdao) " +
+                              "values('" + ursName + "','" + word + "', 'No' , 'No', 'Yes')");
+    }
+
+    public void deletePraise(String ursName, String word, String comeFrom) throws SQLException {
+        if(comeFrom.compareTo("baidu") == 0)
+            statement.execute("update WordsRecord set fromBaidu = fromBaidu - 1 where word = '" + word + "'");
+        if(comeFrom.compareTo("youdao") == 0)
+            statement.execute("update WordsRecord set fromYoudao = fromYoudao - 1 where word = '" + word + "'");
+        if(comeFrom.compareTo("bing") == 0)
+            statement.execute("update WordsRecord set fromBing = fromBing - 1 where word = '" + word + "'");
+
+        if(comeFrom.compareTo("baidu") == 0)
+            statement.execute("update PraiseRecord set baidu = 'No' where usrName = '" + ursName + "' AND word = '" + word + "'");
+        if(comeFrom.compareTo("bing") == 0)
+            statement.execute("update PraiseRecord set bing = 'No' where usrName = '" + ursName + "' AND word = '" + word + "'");
+        if(comeFrom.compareTo("youdao") == 0)
+            statement.execute("update PraiseRecord set youdao = 'No' where usrName = '" + ursName + "' AND word = '" + word + "'");
     }
 
     public String getPraise(String word) throws SQLException {
@@ -200,11 +219,11 @@ public class AccessDB
     }
 
     public void deleteFriend(String friend1, String friend2) throws SQLException {
-        statement.execute("delete from FriendRecord(friend1, friend2)" +
-                          "where friend1 = '" + friend1 + "' AND friend2 = '" + friend2 + "'");
+        statement.execute("delete from FriendRecord " +
+                          "where friend1 = '" + friend1 + "' AND friend2 = '" + friend2 + "';");
 
-        statement.execute("delete from FriendRecord(friend1, friend2)" +
-                "where friend1 = '" + friend2 + "' AND friend2 = '" + friend1 + "'");
+        statement.execute("delete from FriendRecord " +
+                "where friend1 = '" + friend2 + "' AND friend2 = '" + friend1 + "';");
     }
 
     /*public static void main(String[] args)
