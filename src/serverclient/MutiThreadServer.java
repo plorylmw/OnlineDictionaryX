@@ -322,6 +322,26 @@ public class MutiThreadServer extends JFrame//多线程服务器
             return reply.toString();
         }
 
+        public String dealGetWordOffline(String request) throws SQLException {
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            String word = splitRequest[1];
+
+            reply.append(encode("getword") + "&");
+
+            reply.append(encode(baiduTranslate(word)) + "&");
+            reply.append(encode(bingTranslate(word)) + "&");
+            reply.append(encode(youdaoTranslate(word)) + "&");
+
+            synchronized (accessDB)//返回该单词的总体点赞情况
+            {
+                reply.append(accessDB.getPraise(word) + "&");
+            }
+
+            return reply.toString();
+        }
+
         public String dealLove(String request) throws SQLException {
             StringBuilder reply = new StringBuilder();
             String[] splitRequest = request.split("&");
@@ -406,6 +426,26 @@ public class MutiThreadServer extends JFrame//多线程服务器
             String sendFrom = onlineUsrs.get(tmp_session_id);
             DataOutputStream value = outputToClientTotal.get(sendTo);
             value.writeUTF("message" + "&"  + sendFrom + "&" + message);
+
+            return reply.toString();
+        }
+
+        public String dealPicture(String request) throws IOException {
+
+            StringBuilder reply = new StringBuilder();
+            String[] splitRequest = request.split("&");
+
+            int tmp_session_id = Integer.parseInt(splitRequest[1]);
+            String sendTo = splitRequest[2];
+            String word = splitRequest[3];
+
+            String sendFrom = onlineUsrs.get(tmp_session_id);
+            DataOutputStream value = outputToClientTotal.get(sendTo);
+
+            String baiduExplain = baiduTranslate(word);
+            String bingExplain = bingTranslate(word);
+            String youdaoExplain = youdaoTranslate(word);
+            value.writeUTF("picture" + "&"  + sendFrom + "&" + word + "&" + encode(baiduExplain) + "&" + encode(bingExplain) + "&" + encode(youdaoExplain));
 
             return reply.toString();
         }
@@ -505,6 +545,10 @@ public class MutiThreadServer extends JFrame//多线程服务器
             if(splitRequest[0].compareTo("getword") == 0)
                 return dealGetWord(request);
 
+            //离线查单词
+            if(splitRequest[0].compareTo("getwordoffline") == 0)
+                return dealGetWordOffline(request);
+
             //用户点赞
             if(splitRequest[0].compareTo("love") == 0)
                 return dealLove(request);
@@ -536,6 +580,10 @@ public class MutiThreadServer extends JFrame//多线程服务器
             //删除好友
             if(splitRequest[0].compareTo("delete") == 0)
                 return dealDeleteFriend(request);
+
+            //发送图片
+            if(splitRequest[0].compareTo("picture") == 0)
+                return dealPicture(request);
 
             return null;
         }

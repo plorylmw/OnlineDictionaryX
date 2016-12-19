@@ -55,10 +55,8 @@ class HttpClientUtil
     }
 }
 
-public class IcibaTranslate
-{
-    public static String translate(String word)
-    {
+public class IcibaTranslate {
+    public static String translate(String word) {
         StringBuilder ret = new StringBuilder();
         String res;
 
@@ -78,14 +76,15 @@ public class IcibaTranslate
 
             boolean flag = false;
 
-            while(m1.find() && m2.find())
-            {
+            while (m1.find() && m2.find()) {
                 flag = true;
                 //System.out.println(m0.group(1) + '\t' + m1.group(1) + '\t' + m2.group(1));
-                ret.append(m1.group(1) + " " + m2.group(1) + '\n');
+                ret.append(m1.group(1) + " " + m2.group(1));
+                if (m1.find() && m2.find())
+                    ret.append("\n");
             }
 
-            if(!flag)
+            if (!flag)
                 ret.append("未找到释义.");
 
 
@@ -97,8 +96,8 @@ public class IcibaTranslate
         return ret.toString();
     }
 
-    /*String public static void main(String[] args)
-    {
-        translate("sorry");
+    /*public static void main(String[] args) {
+        System.out.print("sorry\n");
     }*/
+
 }
